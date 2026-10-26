@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>开发者工具箱 · Dev Toolkit</title>
+<meta name="description" content="18 个高频开发小工具合集：JSON 格式化、Base64、URL、JWT、时间戳、UUID、密码、MD5/SHA、正则、文本对比、进制、命名转换、转义、颜色、Crontab、chmod、文本统计。单个 HTML，零依赖，离线可用。" />
+<style>
+  :root{--bg:#0b0d11;--panel:#141821;--panel2:#1b2029;--line:#252b36;--text:#e8eaee;--muted:#9aa3ae;--primary:#5b93f5;--accent:#a78bfa;--ok:#4ade80;--bad:#f87171}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",system-ui,sans-serif;font-size:14px;line-height:1.7}
+  .wrap{max-width:1180px;margin:0 auto;padding:20px}
+  header h1{margin:0 0 6px;font-size:24px}
+  header p{margin:0;color:var(--muted);font-size:13px}
+  .badge{display:inline-block;margin-left:8px;padding:2px 8px;border-radius:999px;background:rgba(91,147,245,.14);color:var(--primary);font-size:12px}
+  .layout{display:grid;grid-template-columns:210px 1fr;gap:16px;margin-top:18px}
+  @media(max-width:760px){.layout{grid-template-columns:1fr}}
+  nav{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px;align-self:start;position:sticky;top:16px;max-height:calc(100vh - 40px);overflow:auto}
+  nav input{width:100%;margin-bottom:8px;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:6px 9px;font:inherit}
+  nav button{display:block;width:100%;text-align:left;background:transparent;border:0;color:var(--muted);
+    padding:7px 9px;border-radius:8px;cursor:pointer;font:inherit;font-size:13px}
+  nav button:hover{background:var(--panel2);color:var(--text)}
+  nav button.on{background:rgba(91,147,245,.16);color:var(--primary)}
+  main{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;min-height:420px}
+  main h2{margin:0 0 4px;font-size:18px}
+  main .desc{margin:0 0 16px;color:var(--muted);font-size:13px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+  .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}
+  textarea,input[type=text],input[type=number],select{width:100%;background:var(--panel2);border:1px solid var(--line);
+    color:var(--text);border-radius:9px;padding:8px 10px;font:inherit;font-size:13px}
+  textarea{min-height:110px;resize:vertical;font-family:ui-monospace,"Cascadia Code",Consolas,monospace}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}
+  .btn{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;border:0;border-radius:9px;padding:8px 16px;cursor:pointer;font-weight:600;font-size:13px}
+  .btn.ghost{background:var(--panel2);color:var(--text);border:1px solid var(--line)}
+  .btn.sm{padding:5px 10px;font-size:12px}
+  pre{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:12px;
+    white-space:pre-wrap;word-break:break-all;max-height:340px;overflow:auto;margin:12px 0 0;
+    font-family:ui-monospace,"Cascadia Code",Consolas,monospace;font-size:13px}
+  pre.err{border-color:var(--bad);color:var(--bad)}
+  .kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:12px}
+  .kv div{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:8px 10px}
+  .kv b{display:block;color:var(--muted);font-size:12px;font-weight:400}
+  .kv span{font-family:ui-monospace,Consolas,monospace;font-size:13px;word-break:break-all}
+  .chk{display:flex;gap:12px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+  .chk label{display:flex;align-items:center;gap:4px}
+  .hint{color:var(--muted);font-size:12px;margin-top:8px}
+  .swatch{width:26px;height:26px;border-radius:6px;border:1px solid var(--line);vertical-align:middle;margin-right:8px}
+  footer{margin-top:24px;color:var(--muted);font-size:12px;text-align:center}
+  footer a{color:var(--primary)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>开发者工具箱<span class="badge">18 个小工具 · 纯本地</span></h1>
+    <p>JSON 格式化、Base64、JWT、时间戳、UUID、密码、MD5/SHA、正则、文本对比、进制、命名转换、转义、颜色、Crontab、chmod、文本统计 —— 全部在浏览器本地算，不上传。</p>
+  </header>
+
+  <div class="layout">
+    <nav>
+      <input id="q" type="text" placeholder="搜索工具…" />
+      <div id="list"></div>
+    </nav>
+    <main id="main"></main>
+  </div>
+
+  <footer>单文件 · 零依赖 · 离线可用 — <a href="README.zh-CN.md">中文说明</a> · <a href="README.md">English</a></footer>
+</div>
+
+<script>
+/* ================= 核心算法库（内联，源自站内 devKitLib.js） ================= */
+/**
+ * 开发者工具箱 · 纯逻辑库
+ * 全部函数零依赖、纯浏览器端执行；不引入任何第三方库。
+ * 密码学相关：哈希走 Web Crypto（SFC 内调用），MD5 为内置实现（Web Crypto 不提供）。
+ */
+
+/* ============ Base64（UTF-8 安全；分片避免大字符串爆栈） ============ */
+
+function b64Encode(str) {
+  const bytes = new TextEncoder().encode(String(str ?? ''))
+  let bin = ''
+  const CH = 0x8000
+  for (let i = 0; i < bytes.length; i += CH) {
+    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CH))
+  }
+  return btoa(bin)
+}
+
+function b64Decode(s) {
+  const bin = atob(String(s || '').replace(/\s+/g, ''))
+  const bytes = Uint8Array.from(bin, c => c.charCodeAt(0))
+  return new TextDecoder().decode(bytes)
+}
+
+function b64UrlDecode(s) {
+  return b64Decode(String(s || '').replace(/-/g, '+').replace(/_/g, '/'))
+}
+
+/* ============ MD5（按 RFC 1321 标准算法实现，常量表按定义运行时生成） ============ */
+
+function md5(input) {
+  const msg = new TextEncoder().encode(String(input ?? ''))
+  const len = msg.length
+  // 填充到 56 (mod 64)，再留 8 字节小端长度
+  const padded = new Uint8Array((((len + 8) >> 6) + 1) << 6)
+  padded.set(msg)
+  padded[len] = 0x80
+  const dv = new DataView(padded.buffer)
+  dv.setUint32(padded.length - 8, (len << 3) >>> 0, true)
+  dv.setUint32(padded.length - 4, Math.floor(len / 536870912) >>> 0, true)
+
+  const S = [7, 12, 17, 22, 5, 9, 14, 20, 4, 11, 16, 23, 6, 10, 15, 21]
+  const K = new Uint32Array(64)
+  for (let i = 0; i < 64; i++) K[i] = Math.floor(Math.abs(Math.sin(i + 1)) * 4294967296)
+
+  const rotl = (x, c) => (((x << c) | (x >>> (32 - c))) >>> 0)
+  let a0 = 0x67452301, b0 = 0xefcdab89, c0 = 0x98badcfe, d0 = 0x10325476
+
+  for (let off = 0; off < padded.length; off += 64) {
+    const M = new Uint32Array(16)
+    for (let j = 0; j < 16; j++) M[j] = dv.getUint32(off + j * 4, true)
+    let A = a0, B = b0, C = c0, D = d0
+    for (let i = 0; i < 64; i++) {
+      let F, g
+      if (i < 16) { F = (B & C) | (~B & D); g = i }
+      else if (i < 32) { F = (D & B) | (~D & C); g = (5 * i + 1) % 16 }
+      else if (i < 48) { F = B ^ C ^ D; g = (3 * i + 5) % 16 }
+      else { F = C ^ (B | ~D); g = (7 * i) % 16 }
+      F = (F + A + K[i] + M[g]) >>> 0
+      A = D
+      D = C
+      C = B
+      B = (B + rotl(F, S[(i >> 4) * 4 + (i % 4)])) >>> 0
+    }
+    a0 = (a0 + A) >>> 0
+    b0 = (b0 + B) >>> 0
+    c0 = (c0 + C) >>> 0
+    d0 = (d0 + D) >>> 0
+  }
+  const toHexLE = (n) => {
+    let s = ''
+    for (let i = 0; i < 4; i++) s += (n >>> (i * 8) & 0xff).toString(16).padStart(2, '0')
+    return s
+  }
+  return toHexLE(a0) + toHexLE(b0) + toHexLE(c0) + toHexLE(d0)
+}
+
+/* ============ JWT（仅解码，不验签） ============ */
+
+function jwtDecode(token) {
+  const t = String(token || '').trim()
+  const parts = t.split('.')
+  if (parts.length < 2 || parts.length > 3) throw new Error('JWT 应为 2~3 段点分结构')
+  let header, payload
+  try {
+    header = JSON.parse(b64UrlDecode(parts[0]))
+  } catch (e) {
+    throw new Error('Header 段不是有效的 base64url JSON')
+  }
+  try {
+    payload = JSON.parse(b64UrlDecode(parts[1]))
+  } catch (e) {
+    throw new Error('Payload 段不是有效的 base64url JSON')
+  }
+  return { header, payload, signature: parts[2] || '' }
+}
+
+const HUMAN_ZH = (n, unit) => {
+  if (n >= 86400) return Math.floor(n / 86400) + ' 天'
+  if (n >= 3600) return Math.floor(n / 3600) + ' 小时 ' + Math.floor((n % 3600) / 60) + ' 分'
+  if (n >= 60) return Math.floor(n / 60) + ' 分 ' + (n % 60) + ' 秒'
+  return n + ' 秒'
+}
+
+// 相对现在的过期状态描述
+function jwtTimeState(payload, now = Date.now()) {
+  const out = []
+  for (const [key, label] of [['iat', '签发于'], ['nbf', '生效于'], ['exp', '过期于']]) {
+    const v = payload?.[key]
+    if (typeof v !== 'number') continue
+    const d = new Date(v * 1000)
+    const diff = (v * 1000 - now) / 1000
+    let rel
+    if (key === 'exp') rel = diff > 0 ? '（还有 ' + HUMAN_ZH(Math.round(diff)) + '）' : '（已过期 ' + HUMAN_ZH(Math.round(-diff)) + '）'
+    else rel = diff > 0 ? '（还有 ' + HUMAN_ZH(Math.round(diff)) + ' 生效）' : '（' + HUMAN_ZH(Math.round(-diff)) + '前）'
+    out.push({ key, label, date: d.toLocaleString(), rel, expired: key === 'exp' && diff <= 0 })
+  }
+  return out
+}
+
+/* ============ 文本 Diff（行级 LCS；超长截断保护） ============ */
+
+const DIFF_CAP = 2000
+
+function lineDiff(aText, bText) {
+  let A = String(aText ?? '').split('\n')
+  let B = String(bText ?? '').split('\n')
+  let truncated = false
+  if (A.length > DIFF_CAP || B.length > DIFF_CAP) {
+    A = A.slice(0, DIFF_CAP)
+    B = B.slice(0, DIFF_CAP)
+    truncated = true
+  }
+  const n = A.length, m = B.length
+  // LCS 长度表（滚动数组回溯需要完整表，用 Int32Array 控制内存）
+  const dp = new Int32Array((n + 1) * (m + 1))
+  for (let i = n - 1; i >= 0; i--) {
+    for (let j = m - 1; j >= 0; j--) {
+      dp[i * (m + 1) + j] = A[i] === B[j]
+        ? dp[(i + 1) * (m + 1) + j + 1] + 1
+        : Math.max(dp[(i + 1) * (m + 1) + j], dp[i * (m + 1) + j + 1])
+    }
+  }
+  const ops = []
+  let i = 0, j = 0
+  while (i < n && j < m) {
+    if (A[i] === B[j]) { ops.push({ type: ' ', text: A[i] }); i++; j++ }
+    else if (dp[(i + 1) * (m + 1) + j] >= dp[i * (m + 1) + j + 1]) { ops.push({ type: '-', text: A[i] }); i++ }
+    else { ops.push({ type: '+', text: B[j] }); j++ }
+  }
+  while (i < n) { ops.push({ type: '-', text: A[i] }); i++ }
+  while (j < m) { ops.push({ type: '+', text: B[j] }); j++ }
+  return { ops, truncated }
+}
+
+/* ============ 颜色转换 ============ */
+
+function parseColor(input) {
+  const s = String(input || '').trim().toLowerCase()
+  let m
+  if ((m = s.match(/^#?([0-9a-f]{3})$/))) {
+    const [r, g, b] = m[1].split('').map(c => parseInt(c + c, 16))
+    return { r, g, b }
+  }
+  if ((m = s.match(/^#?([0-9a-f]{6})$/))) {
+    const n = parseInt(m[1], 16)
+    return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 }
+  }
+  if ((m = s.match(/^rgba?\(\s*(\d+)\s*[,\s]\s*(\d+)\s*[,\s]\s*(\d+)/))) {
+    return { r: +m[1], g: +m[2], b: +m[3] }
+  }
+  if ((m = s.match(/^hsla?\(\s*(\d+)\s*[,\s]\s*(\d+)%?\s*[,\s]\s*(\d+)%?/))) {
+    return hslToRgb(+m[1], +m[2], +m[3])
+  }
+  return null
+}
+
+function hslToRgb(h, s, l) {
+  s /= 100
+  l /= 100
+  const k = n => (n + h / 30) % 12
+  const a = s * Math.min(l, 1 - l)
+  const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)))
+  return { r: Math.round(f(0) * 255), g: Math.round(f(8) * 255), b: Math.round(f(4) * 255) }
+}
+
+function rgbToHsl({ r, g, b }) {
+  r /= 255
+  g /= 255
+  b /= 255
+  const max = Math.max(r, g, b), min = Math.min(r, g, b)
+  const l = (max + min) / 2
+  let h = 0, s = 0
+  if (max !== min) {
+    const d = max - min
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min)
+    if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) * 60
+    else if (max === g) h = ((b - r) / d + 2) * 60
+    else h = ((r - g) / d + 4) * 60
+  }
+  return { h: Math.round(h), s: Math.round(s * 100), l: Math.round(l * 100) }
+}
+
+function colorForms({ r, g, b }) {
+  const hex = '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('')
+  const hsl = rgbToHsl({ r, g, b })
+  return {
+    hex,
+    rgb: `rgb(${r}, ${g}, ${b})`,
+    hsl: `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`,
+    luminance: (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255
+  }
+}
+
+/* ============ 大小写 / 命名风格转换 ============ */
+
+function toWords(str) {
+  return String(str ?? '')
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .split(/[^A-Za-z0-9\u4e00-\u9fff]+/)
+    .filter(Boolean)
+}
+
+function nameCases(str) {
+  const w = toWords(str)
+  const lower = w.map(x => x.toLowerCase())
+  const cap = lower.map(x => x.charAt(0).toUpperCase() + x.slice(1))
+  const join = (arr, sep) => arr.join(sep)
+  return {
+    lower: join(lower, ' '),
+    upper: join(lower, ' ').toUpperCase(),
+    camel: lower.map((x, i) => i === 0 ? x : cap[i]).join('') || str,
+    pascal: cap.join(''),
+    snake: lower.join('_'),
+    kebab: lower.join('-'),
+    constant: lower.join('_').toUpperCase()
+  }
+}
+
+/* ============ 转义 ============ */
+
+const HTML_ENT = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }
+const HTML_UNENT = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' }
+
+function htmlEscape(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => HTML_ENT[c])
+}
+
+function htmlUnescape(s) {
+  return String(s ?? '')
+    .replace(/&#x([0-9a-f]+);/gi, (_, h) => String.fromCodePoint(parseInt(h, 16)))
+    .replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(+d))
+    .replace(/&([a-z]+);/gi, (m0, name) => HTML_UNENT[String(name).toLowerCase()] ?? m0)
+}
+
+function jsonEscape(s) {
+  return JSON.stringify(String(s ?? '')).slice(1, -1)
+}
+
+function jsonUnescape(s) {
+  return JSON.parse('"' + String(s ?? '') + '"')
+}
+
+/* ============ 进制转换（BigInt 支持超长整数） ============ */
+
+const RADIX_DIGITS = '0123456789abcdefghijklmnopqrstuvwxyz'
+
+function convertRadix(str, from, to) {
+  const s = String(str ?? '').trim().toLowerCase().replace(/^0+(?=.)/, '')
+  if (!s || s === '-') throw new Error('输入为空')
+  const neg = s.startsWith('-')
+  const body = neg ? s.slice(1) : s
+  let n = 0n
+  for (const ch of body) {
+    const d = RADIX_DIGITS.indexOf(ch)
+    if (d < 0 || d >= from) throw new Error(`「${ch}」不是 ${from} 进制的合法字符`)
+    n = n * BigInt(from) + BigInt(d)
+  }
+  if (n === 0n) return '0'
+  let out = ''
+  const tb = BigInt(to)
+  while (n > 0n) {
+    out = RADIX_DIGITS[Number(n % tb)] + out
+    n /= tb
+  }
+  return (neg ? '-' : '') + out
+}
+
+/* ============ Crontab 解析（5 字段 + Vixie 日/周 OR 语义） ============ */
+
+const MONTH_NAMES = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
+const DOW_NAMES = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
+const CRON_RANGES = [
+  [0, 59], // 分
+  [0, 23], // 时
+  [1, 31], // 日
+  [1, 12], // 月
+  [0, 7]   // 周（7 视作周日 0）
+]
+
+function expandCronField(field, idx) {
+  const [lo, hi] = CRON_RANGES[idx]
+  const names = idx === 3 ? MONTH_NAMES : idx === 4 ? DOW_NAMES : null
+  const parseToken = (t) => {
+    let v
+    if (names) {
+      const ni = names.indexOf(t.slice(0, 3))
+      if (ni >= 0) return ni
+    }
+    if (/^\d+$/.test(t)) return parseInt(t, 10)
+    throw new Error(`字段值「${t}」不合法`)
+  }
+  const set = new Set()
+  const restricted = field !== '*'
+  for (const part of field.split(',')) {
+    const m = part.match(/^(\*|\d+|[a-z]{3})(?:-(\*|\d+|[a-z]{3}))?(?:\/(\d+))?$/i)
+    if (!m) throw new Error(`「${part}」无法解析`)
+    let start = m[1] === '*' ? lo : parseToken(m[1])
+    let end
+    if (!m[2]) end = m[1] === '*' ? hi : start
+    else end = m[2] === '*' ? hi : parseToken(m[2])
+    if (idx === 4 && end === 7) end = 0
+    if (start < lo || (start > hi && !(idx === 4 && start === 7)) || end > hi || end < start) {
+      throw new Error(`「${part}」超出第 ${idx + 1} 字段范围（${lo}-${hi}）`)
+    }
+    const step = m[3] ? parseInt(m[3], 10) : 1
+    if (step < 1) throw new Error(`步长「${m[3]}」不合法`)
+    for (let v = start; v <= end; v += step) set.add(idx === 4 && v === 7 ? 0 : v)
+  }
+  return { set, restricted }
+}
+
+function parseCron(expr) {
+  const parts = String(expr || '').trim().split(/\s+/)
+  if (parts.length !== 5) throw new Error('需要 5 个字段：分 时 日 月 周')
+  const fields = parts.map((p, i) => expandCronField(p, i))
+  return {
+    minutes: fields[0].set,
+    hours: fields[1].set,
+    days: fields[2],
+    months: fields[3].set,
+    dows: fields[4]
+  }
+}
+
+function cronDayMatch(parsed, d) {
+  const domOk = parsed.days.set.has(d.getDate())
+  const dowOk = parsed.dows.set.has(d.getDay())
+  // Vixie cron：日与周都受限时为 OR 语义
+  if (parsed.days.restricted && parsed.dows.restricted) return domOk || dowOk
+  if (parsed.days.restricted) return domOk
+  if (parsed.dows.restricted) return dowOk
+  return true
+}
+
+// 从 from 起枚举接下来 count 次运行时间（分钟级步进，上限 366 天）
+function cronNextRuns(expr, from = new Date(), count = 5) {
+  const p = parseCron(expr)
+  const out = []
+  const d = new Date(from.getTime())
+  d.setSeconds(0, 0)
+  d.setMinutes(d.getMinutes() + 1)
+  const limit = new Date(from.getTime() + 366 * 86400 * 1000)
+  while (out.length < count && d < limit) {
+    if (p.months.has(d.getMonth() + 1) && p.hours.has(d.getHours()) && p.minutes.has(d.getMinutes()) && cronDayMatch(p, d)) {
+      out.push(new Date(d.getTime()))
+    }
+    d.setMinutes(d.getMinutes() + 1)
+  }
+  return out
+}
+
+const DOW_ZH = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+const pad2 = (n) => String(n).padStart(2, '0')
+
+// 常见形态的中文概要描述（不追求全语法自然语言，兜底给字段明细）
+function cronDescribe(expr) {
+  const p = parseCron(expr)
+  const [minF, hourF, domF, monF, dowF] = expr.trim().split(/\s+/)
+  const everyMin = minF === '*' && hourF === '*' && domF === '*' && monF === '*' && dowF === '*'
+  if (everyMin) return '每分钟执行一次'
+  const stepMin = minF.match(/^\*\/(\d+)$/)
+  if (stepMin && hourF === '*' && domF === '*' && monF === '*' && dowF === '*') {
+    return `每隔 ${stepMin[1]} 分钟执行一次`
+  }
+  const stepHour = hourF.match(/^\*\/(\d+)$/)
+  if (stepHour && domF === '*' && monF === '*' && dowF === '*') {
+    return minF === '*' ? `每隔 ${stepHour[1]} 小时（每分钟）执行` : `每隔 ${stepHour[1]} 小时，在第 ${[...p.minutes].sort((a, b) => a - b).join('、')} 分钟执行`
+  }
+  const daily = domF === '*' && monF === '*' && dowF === '*'
+  if (daily) {
+    const mins = [...p.minutes].sort((a, b) => a - b)
+    const hours = [...p.hours].sort((a, b) => a - b)
+    if (hours.length === 1) return `每天 ${pad2(hours[0])}:${pad2(mins[0])}${mins.length > 1 ? ` 等 ${mins.length} 个分钟点` : ''} 执行`
+    return `每天 ${hours.map(h => pad2(h)).join('、')} 点的指定分钟执行`
+  }
+  if (dowF !== '*' && domF === '*' && monF === '*') {
+    const dows = [...p.dows.set].sort((a, b) => a - b).map(d => DOW_ZH[d]).join('、')
+    const hours = [...p.hours].sort((a, b) => a - b)
+    return `每${dows.includes('、') ? '' : ''}${dows}的 ${hours.join('、')} 点执行`
+  }
+  if (domF !== '*' && monF === '*' && dowF === '*') {
+    const days = [...p.days.set].sort((a, b) => a - b).join('、')
+    return `每月 ${days} 日执行`
+  }
+  return '自定义组合（见下方字段明细）'
+}
+
+/* ============ chmod 计算 ============ */
+
+function chmodToOctal(perms) {
+  const bit = (o, k) => (perms[o][k] ? 1 : 0)
+  const tri = (o) => bit(o, 'r') * 4 + bit(o, 'w') * 2 + bit(o, 'x')
+  return tri('owner') * 100 + tri('group') * 10 + tri('other')
+}
+
+function chmodFromOctal(n) {
+  const mk = (v) => ({ r: !!(v & 4), w: !!(v & 2), x: !!(v & 1) })
+  return {
+    owner: mk(Math.floor(n / 100) % 10),
+    group: mk(Math.floor(n / 10) % 10),
+    other: mk(n % 10)
+  }
+}
+
+function chmodSymbolic(perms) {
+  const seg = (o) => (perms[o].r ? 'r' : '-') + (perms[o].w ? 'w' : '-') + (perms[o].x ? 'x' : '-')
+  return seg('owner') + seg('group') + seg('other')
+}
+
+/* ============ 随机（安全随机源 + 拒绝采样消除取模偏差） ============ */
+
+function randBelow(max) {
+  const range = 0x100000000 - (0x100000000 % max)
+  const buf = new Uint32Array(1)
+  for (;;) {
+    crypto.getRandomValues(buf)
+    if (buf[0] < range) return buf[0] % max
+  }
+}
+
+function genPassword(length, pool) {
+  let out = ''
+  for (let i = 0; i < length; i++) out += pool[randBelow(pool.length)]
+  return out
+}
+
+/* ============ 文本统计（中文感知） ============ */
+
+function textStats(str) {
+  const s = String(str ?? '')
+  const chars = [...s]
+  const cjk = chars.filter(c => /[\u4e00-\u9fff\u3400-\u4dbf]/.test(c)).length
+  const latinWords = (s.match(/[A-Za-z0-9]+(?:['’-][A-Za-z0-9]+)*/g) || []).length
+  return {
+    characters: chars.length,
+    noSpace: chars.filter(c => !/\s/.test(c)).length,
+    cjk,
+    words: latinWords + cjk,
+    lines: s === '' ? 0 : s.split('\n').length,
+    paragraphs: s.split(/\n\s*\n/).filter(x => x.trim()).length,
+    bytes: new TextEncoder().encode(s).length
+  }
+}
+
+/* ============ JSON 错误定位（V8 报错消息兼容） ============ */
+
+function jsonErrorInfo(e, source) {
+  const msg = e instanceof Error ? e.message : String(e)
+  const src = String(source ?? '')
+  const posFromIndex = (pos) => {
+    const before = src.slice(0, pos)
+    const line = before.split('\n').length
+    const col = pos - before.lastIndexOf('\n')
+    return { line, col }
+  }
+  const posMatch = msg.match(/position (\d+)/i)
+  if (posMatch) return { message: msg, ...posFromIndex(+posMatch[1]) }
+  const lcMatch = msg.match(/line (\d+) column (\d+)/i)
+  if (lcMatch) return { message: msg, line: +lcMatch[1], col: +lcMatch[2] }
+  // 新版 V8 消息不带 position，但会把出错的源码片段放在引号里：拿片段反查原文位置
+  const snip = msg.match(/"([\s\S]{1,80}?)" (?:is not valid JSON|in JSON)/)
+  if (snip) {
+    const idx = src.indexOf(snip[1])
+    if (idx >= 0) return { message: msg, ...posFromIndex(idx) }
+  }
+  return { message: msg, line: null, col: null }
+}
+
+/* ========================================================================== */
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+
+/* ---------- 工具定义：每个工具 = 一组输入 + 一个 run() ---------- */
+const TOOLS = [
+  {
+    id: 'json', name: 'JSON 格式化 / 校验', cat: 'json',
+    desc: '格式化、压缩、转义检查；报错时定位到具体行列。',
+    fields: [{ key: 'src', label: '输入 JSON', type: 'textarea', ph: '{"a":1,"b":[1,2]}', value: '{"site":"nbcode.top","tools":["pixel-art","dev-kit"],"ok":true}' }],
+    actions: [
+      { id: 'fmt', name: '格式化（2 空格）' },
+      { id: 'min', name: '压缩' },
+      { id: 'esc', name: '转 JSON 字符串' },
+      { id: 'unesc', name: '反转义' }
+    ],
+    run(a, v) {
+      if (a === 'esc') return jsonEscape(v.src);
+      if (a === 'unesc') return jsonUnescape(v.src);
+      const obj = JSON.parse(v.src);
+      return a === 'min' ? JSON.stringify(obj) : JSON.stringify(obj, null, 2);
+    }
+  },
+  {
+    id: 'b64', name: 'Base64 编解码', cat: 'encode',
+    desc: '支持 UTF-8（中文不会乱码），带 URL 安全模式。',
+    fields: [{ key: 'src', label: '输入', type: 'textarea', ph: 'hello 世界' }],
+    actions: [{ id: 'enc', name: '编码' }, { id: 'dec', name: '解码' }, { id: 'encu', name: '编码(URL安全)' }, { id: 'decu', name: '解码(URL安全)' }],
+    run(a, v) {
+      if (a === 'enc') return b64Encode(v.src);
+      if (a === 'dec') return b64Decode(v.src);
+      if (a === 'encu') return b64Encode(v.src).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      return b64UrlDecode(v.src);
+    }
+  },
+  {
+    id: 'url', name: 'URL 编解码', cat: 'encode',
+    desc: 'encodeURIComponent / decodeURIComponent 互转。',
+    fields: [{ key: 'src', label: '输入', type: 'textarea', ph: 'https://a.com/?q=中文' }],
+    actions: [{ id: 'enc', name: '编码' }, { id: 'dec', name: '解码' }, { id: 'encAll', name: '整体编码(URI)' }],
+    run(a, v) {
+      if (a === 'enc') return encodeURIComponent(v.src);
+      if (a === 'dec') return decodeURIComponent(v.src);
+      return encodeURI(v.src);
+    }
+  },
+  {
+    id: 'jwt', name: 'JWT 解码', cat: 'web',
+    desc: '解析 Header / Payload，并标出过期时间状态（不校验签名）。',
+    fields: [{ key: 'src', label: 'JWT', type: 'textarea', ph: 'eyJhbGciOi...', value: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Iuivt-maj-WPuOWSjOi0pyIsImlhdCI6MTcwMDAwMDAwMCwiZXhwIjoyMDAwMDAwMDAwfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c' }],
+    actions: [{ id: 'go', name: '解码' }],
+    run(a, v) {
+      const r = jwtDecode(v.src);
+      const st = jwtTimeState(r.payload);
+      return JSON.stringify({ header: r.header, payload: r.payload, 过期状态: st, 签名段: r.signature ? r.signature.slice(0, 24) + '…（本工具不校验签名）' : '无' }, null, 2);
+    }
+  },
+  {
+    id: 'ts', name: '时间戳 ↔ 日期', cat: 'time',
+    desc: '秒 / 毫秒自动识别，给出本地时间与 ISO 字符串。',
+    fields: [{ key: 'src', label: '时间戳或日期', type: 'text', ph: '1700000000', value: '1700000000' }],
+    actions: [{ id: 'go', name: '转换' }, { id: 'now', name: '填当前时间' }],
+    run(a, v) {
+      if (a === 'now') return String(Date.now());
+      const s = v.src.trim();
+      let ms;
+      if (/^\d+$/.test(s)) ms = s.length <= 10 ? +s * 1000 : +s;
+      else ms = new Date(s).getTime();
+      if (!isFinite(ms)) throw new Error('无法解析：' + s);
+      const d = new Date(ms);
+      return [
+        '秒      : ' + Math.floor(ms / 1000),
+        '毫秒    : ' + ms,
+        '本地时间: ' + d.toLocaleString('zh-CN', { hour12: false }),
+        'ISO     : ' + d.toISOString(),
+        'UTC     : ' + d.toUTCString()
+      ].join('\n');
+    }
+  },
+  {
+    id: 'uuid', name: 'UUID 生成', cat: 'gen',
+    desc: 'v4 随机 UUID，可一次生成多个。',
+    fields: [{ key: 'n', label: '数量', type: 'number', value: '5' }],
+    actions: [{ id: 'go', name: '生成' }],
+    run(a, v) {
+      const n = Math.min(200, Math.max(1, +v.n || 1));
+      const out = [];
+      for (let i = 0; i < n; i++) out.push(crypto.randomUUID ? crypto.randomUUID() : genPassword(32, '0123456789abcdef'));
+      return out.join('\n');
+    }
+  },
+  {
+    id: 'pwd', name: '密码生成', cat: 'gen',
+    desc: '可选字符集与长度，用 crypto 随机源。',
+    fields: [
+      { key: 'n', label: '长度', type: 'number', value: '16' },
+      { key: 'pool', label: '字符集', type: 'text', value: 'abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$%^&*' }
+    ],
+    actions: [{ id: 'go', name: '生成 5 个' }],
+    run(a, v) {
+      const pool = v.pool || 'abcdefghijkmnpqrstuvwxyz23456789';
+      const len = Math.min(128, Math.max(4, +v.n || 16));
+      const out = [];
+      for (let i = 0; i < 5; i++) out.push(genPassword(len, pool));
+      return out.join('\n');
+    }
+  },
+  {
+    id: 'md5', name: 'MD5', cat: 'hash',
+    desc: '纯 JS 实现，同步返回。',
+    fields: [{ key: 'src', label: '文本', type: 'textarea', ph: 'hello', value: 'hello 世界' }],
+    actions: [{ id: 'go', name: '计算' }],
+    run: (a, v) => md5(v.src)
+  },
+  {
+    id: 'sha', name: 'SHA-1 / 256 / 512', cat: 'hash',
+    desc: '走浏览器 Web Crypto（需 https 或 localhost 环境）。',
+    fields: [{ key: 'src', label: '文本', type: 'textarea', ph: 'hello', value: 'hello 世界' }],
+    actions: [{ id: 'sha-1', name: 'SHA-1' }, { id: 'SHA-256', name: 'SHA-256' }, { id: 'SHA-512', name: 'SHA-512' }],
+    async run(a, v) {
+      if (!crypto.subtle) throw new Error('当前环境不支持 crypto.subtle，请用 https 或 localhost 打开');
+      const buf = await crypto.subtle.digest(a, new TextEncoder().encode(v.src));
+      return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+  },
+  {
+    id: 'regex', name: '正则测试', cat: 'text',
+    desc: '实时高亮匹配，列出捕获组。',
+    fields: [
+      { key: 'pat', label: '正则', type: 'text', ph: '(\\w+)@(\\w+)', value: '(\\w+)@(\\w+\\.[a-z]+)' },
+      { key: 'flag', label: '标志', type: 'text', value: 'g' },
+      { key: 'src', label: '测试文本', type: 'textarea', ph: 'mail: a@b.com, x@y.cn', value: 'contact: hello@nbcode.top, backup: dev@example.com' }
+    ],
+    actions: [{ id: 'go', name: '测试' }],
+    run(a, v) {
+      const re = new RegExp(v.pat, v.flag || '');
+      const out = [];
+      let m, i = 0;
+      if (re.global) {
+        while ((m = re.exec(v.src)) && i++ < 500) {
+          out.push(`#${i} ${JSON.stringify(m[0])} @${m.index}` + (m.length > 1 ? '  组: ' + m.slice(1).map(x => JSON.stringify(x)).join(', ') : ''));
+        }
+      } else {
+        m = re.exec(v.src);
+        out.push(m ? `匹配: ${JSON.stringify(m[0])} @${m.index}` + (m.length > 1 ? '\n组: ' + m.slice(1).map(x => JSON.stringify(x)).join(', ') : '') : '无匹配');
+      }
+      return out.length ? out.join('\n') : '无匹配';
+    }
+  },
+  {
+    id: 'diff', name: '文本对比（逐行）', cat: 'text',
+    desc: '左为原文、右为新版，输出 + / - 差异行。',
+    fields: [
+      { key: 'a', label: '原文', type: 'textarea', ph: '第一行\n第二行', value: '第一行\n第二行\n第三行' },
+      { key: 'b', label: '新版', type: 'textarea', ph: '第一行\n第二行改了', value: '第一行\n第二行改了\n新增行' }
+    ],
+    actions: [{ id: 'go', name: '对比' }],
+    run(a, v) {
+      // lineDiff 返回 { ops:[{type:' '|'+'|'-', text}], truncated }，不是数组
+      const d = lineDiff(v.a, v.b);
+      const ops = (d && d.ops) || [];
+      if (!ops.length) return '两段文本完全相同';
+      const changed = ops.filter(x => x.type !== ' ').length;
+      return (d.truncated ? '（超过 2000 行，已截断）\n' : '')
+        + ops.map(x => x.type + ' ' + x.text).join('\n')
+        + `\n\n—— 共 ${ops.length} 行，其中 ${changed} 行有变化（+ 新增 / - 删除 / 空格 未变）`;
+    }
+  },
+  {
+    id: 'radix', name: '进制转换', cat: 'number',
+    desc: '2 ~ 36 进制任意互转，支持大数（字符串运算）。',
+    fields: [
+      { key: 'src', label: '数值', type: 'text', value: '255' },
+      { key: 'from', label: '原进制', type: 'number', value: '10' },
+      { key: 'to', label: '目标进制', type: 'number', value: '16' }
+    ],
+    actions: [{ id: 'go', name: '转换' }],
+    run: (a, v) => convertRadix(v.src, +v.from, +v.to)
+  },
+  {
+    id: 'case', name: '命名风格转换', cat: 'text',
+    desc: 'camel / Pascal / snake / kebab / CONSTANT 一次给全。',
+    fields: [{ key: 'src', label: '原始名', type: 'text', ph: 'user name', value: 'user profile name' }],
+    actions: [{ id: 'go', name: '转换' }],
+    run(a, v) {
+      const r = nameCases(v.src);
+      return Object.entries(r).map(([k, x]) => k.padEnd(9) + x).join('\n');
+    }
+  },
+  {
+    id: 'escape', name: 'HTML / JSON 转义', cat: 'encode',
+    desc: '正反向互转，处理 & < > " \' 等字符。',
+    fields: [{ key: 'src', label: '输入', type: 'textarea', ph: '<a href="x">y</a>' }],
+    actions: [{ id: 'he', name: 'HTML 转义' }, { id: 'hu', name: 'HTML 反转义' }, { id: 'je', name: 'JSON 转义' }, { id: 'ju', name: 'JSON 反转义' }],
+    run(a, v) {
+      return a === 'he' ? htmlEscape(v.src) : a === 'hu' ? htmlUnescape(v.src) : a === 'je' ? jsonEscape(v.src) : jsonUnescape(v.src);
+    }
+  },
+  {
+    id: 'color', name: '颜色转换', cat: 'design',
+    desc: 'HEX / RGB / HSL 互转，并给出相对亮度。',
+    fields: [{ key: 'src', label: '颜色', type: 'text', value: '#5b93f5' }],
+    actions: [{ id: 'go', name: '转换' }],
+    run(a, v) {
+      const f = colorForms(parseColor(v.src));
+      return [`hex       ${f.hex}`, `rgb       ${f.rgb}`, `hsl       ${f.hsl}`, `亮度      ${f.luminance.toFixed(3)}（>0.5 建议配深色文字）`].join('\n');
+    },
+    after(html, v) { return `<span class="swatch" style="background:${colorForms(parseColor(v.src)).hex}"></span>` + html }
+  },
+  {
+    id: 'cron', name: 'Crontab 解释', cat: 'time',
+    desc: '把 5 段表达式翻译成人话，并列出接下来 5 次执行时间。',
+    fields: [{ key: 'src', label: '表达式', type: 'text', value: '*/5 * * * *' }],
+    actions: [{ id: 'go', name: '解释' }],
+    run(a, v) {
+      const next = cronNextRuns(v.src, new Date(), 5).map(d => d.toLocaleString('zh-CN', { hour12: false }));
+      return cronDescribe(v.src) + '\n\n接下来 5 次：\n' + next.join('\n');
+    }
+  },
+  {
+    id: 'chmod', name: 'chmod 权限计算', cat: 'sys',
+    desc: '数字 ↔ rwx 符号互转。',
+    fields: [{ key: 'src', label: '数字权限（如 755）', type: 'text', value: '755' }],
+    actions: [{ id: 'go', name: '计算' }],
+    run(a, v) {
+      const n = +String(v.src).trim();
+      if (!isFinite(n)) throw new Error('请输入数字，如 755');
+      const p = chmodFromOctal(n);
+      const sym = (o) => (o.r ? 'r' : '-') + (o.w ? 'w' : '-') + (o.x ? 'x' : '-');
+      return [
+        `八进制    ${n}`,
+        `符号      ${sym(p.owner)}${sym(p.group)}${sym(p.other)}`,
+        `u/g/o     owner=${sym(p.owner)} group=${sym(p.group)} other=${sym(p.other)}`,
+        `反向校验  ${chmodToOctal(p)}`
+      ].join('\n');
+    }
+  },
+  {
+    id: 'stats', name: '文本统计', cat: 'text',
+    desc: '字符 / 去空格 / 中文字数 / 词数 / 行数 / 段落 / 字节。',
+    fields: [{ key: 'src', label: '文本', type: 'textarea', ph: '你好 world', value: '你好 world\n这是第二行。' }],
+    actions: [{ id: 'go', name: '统计' }],
+    run(a, v) {
+      const s = textStats(v.src);
+      return Object.entries({
+        characters: '字符数', noSpace: '去空白字符', cjk: '中文字符', words: '词数',
+        lines: '行数', paragraphs: '段落数', bytes: 'UTF-8 字节'
+      }).map(([k, label]) => label.padEnd(12) + s[k]).join('\n');
+    }
+  }
+];
+
+/* ---------- 渲染 ---------- */
+let cur = 'json';
+function renderList(filter = '') {
+  const f = filter.trim().toLowerCase();
+  $('list').innerHTML = TOOLS
+    .filter(t => !f || (t.name + t.desc + t.cat).toLowerCase().includes(f))
+    .map(t => `<button data-id="${t.id}" class="${t.id === cur ? 'on' : ''}">${t.name}</button>`).join('');
+}
+function renderMain() {
+  const t = TOOLS.find(x => x.id === cur);
+  const fields = t.fields.map(f => `
+    <div class="field">
+      <label>${f.label}</label>
+      ${f.type === 'textarea'
+        ? `<textarea id="f_${f.key}" placeholder="${f.ph || ''}">${f.value || ''}</textarea>`
+        : `<input type="${f.type}" id="f_${f.key}" value="${f.value || ''}" placeholder="${f.ph || ''}" />`}
+    </div>`).join('');
+  $('main').innerHTML = `
+    <h2>${t.name}</h2><p class="desc">${t.desc}</p>
+    <div class="grid">${fields}</div>
+    <div class="row" id="acts"></div>
+    <pre id="out" hidden></pre>
+    <div class="row"><button class="btn ghost sm" id="copy">复制结果</button></div>`;
+  $('acts').innerHTML = t.actions.map(a => `<button class="btn${a.id === t.actions[0].id ? '' : ' ghost'}" data-act="${a.id}">${a.name}</button>`).join('');
+  $('acts').addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    exec(t, b.dataset.act);
+  });
+  $('copy').addEventListener('click', () => {
+    const el = $('out');
+    if (el && !el.hidden) navigator.clipboard.writeText(el.textContent);
+  });
+}
+function vals(t) {
+  const v = {};
+  t.fields.forEach(f => { const el = $('f_' + f.key); v[f.key] = el ? el.value : '' });
+  return v;
+}
+async function exec(t, act) {
+  const out = $('out');
+  out.hidden = false; out.className = ''; out.textContent = '…';
+  try {
+    const v = vals(t);
+    const r = await t.run(act, v);
+    out.textContent = typeof r === 'string' ? r : JSON.stringify(r, null, 2);
+  } catch (e) {
+    out.className = 'err';
+    let msg = String(e && e.message || e);
+    if (t.id === 'json' && /position|Unexpected|JSON/.test(msg) && typeof jsonErrorInfo === 'function') {
+      try { const info = jsonErrorInfo(e, vals(t).src); if (info) msg += '\n' + JSON.stringify(info) } catch {}
+    }
+    out.textContent = '出错了：' + msg;
+  }
+}
+$('list').addEventListener('click', (e) => {
+  const b = e.target.closest('button'); if (!b) return;
+  cur = b.dataset.id; renderList($('q').value); renderMain();
+});
+$('q').addEventListener('input', (e) => renderList(e.target.value));
+renderList(); renderMain();
+</script>
+</body>
+</html>
